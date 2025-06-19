@@ -52,12 +52,12 @@ class DurationTrialRunner(TrialRunner):
         # Repeat set of amplitudes for the requested number of repetitions.
         for repetition_number in range(self.param['trial']['repetitions']):  
 
-            # Get copy of list of amplitudes and (optionaly) shuffle the list
+            # Get copy of list of stimulus times (on and off) and (optionaly) shuffle the list
             stimulus_t_list = copy.copy(self.param['trial']['stimulus_t'])
             if self.param['trial']['randomize']['stimulus_t']:
                 random.shuffle(stimulus_t_list)
 
-            # Loop over amplitudes and present each in the both the and right directions
+            # Loop over stimulus times and present amplitude in the both directions
             for stimulus_t in stimulus_t_list:
                 left_right_signs = [1, -1] # 1 = left,-1 = right
                 if self.param['trial']['randomize']['left_right']:

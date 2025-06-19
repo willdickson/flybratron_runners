@@ -3,3 +3,4 @@ from trial_runner import index_to_volts
 from amplitude_trial_runner import AmplitudeTrialRunner
 from duration_trial_runner import DurationTrialRunner
 from phase_trial_runner import PhaseTrialRunner
+from closed_loop_trial_runner import ClosedLoopTrialRunner

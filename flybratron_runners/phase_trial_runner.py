@@ -43,9 +43,12 @@ class PhaseTrialRunner(TrialRunner):
 
         left_right_signs = np.array([1, -1]) # 1 = left,-1 = right
 
+        # Loop over list of phases to test
         for phase in self.param['trial']['phases']:
             self.flybratron_dev.phase = phase
             amplitude = self.param['trial']['amplitude']
+
+            # Present each phase in the left and right directions
             for sign in left_right_signs:
                 amplitude_w_sign = sign*amplitude
                 print('amplitude: {} at phase: {}'.format(amplitude_w_sign, phase))
