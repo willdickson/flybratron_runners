@@ -1,10 +1,10 @@
 from __future__ import print_function
 import time
 import numpy as np
-from trial_runner import TrialRunner
+from flybratron_trial_runner import FlybratronTrialRunner
 
 
-class AmplitudeTrialRunner(TrialRunner):
+class AmplitudeTrialRunner(FlybratronTrialRunner):
 
     def __init__(self, param):
         """
@@ -13,21 +13,53 @@ class AmplitudeTrialRunner(TrialRunner):
         super(AmplitudeTrialRunner, self).__init__(param)
         self.amplitudes_to_list()
 
-    def mark_quiet_period(self):
+
+    def mark_quiet_period(self, start_up=False):
         """
         Set phidget voltage to mark an quiet period and wait for the
         appropriate time period. 
         """
         super(AmplitudeTrialRunner, self).mark_quiet_period()
-        time.sleep(self.param['trial']['stimulus_off_t'])
+        if start_up:
+            time.sleep(self.STARTUP_QUIET_DURATION)
+        else:
+            time.sleep(self.param['trial']['stimulus_off_t'])
 
-    def mark_amplitude(self,amplitude):
+
+    def mark_amplitude(self, amplitude):
         """
-        Set phidget voltage to the amplitude and wait for the appropriate time
-        period. 
+        Set analog output of Phidget to voltage indicating a specific trial amplitude 
         """
-        super(AmplitudeTrialRunner, self).mark_amplitude(amplitude)
+        marker_voltage = self.get_amplitude_marker_voltage(amplitude)
+        self.set_marker_voltage(marker_voltage)
         time.sleep(self.param['trial']['stimulus_on_t'])
+
+
+    def get_amplitude_index(self, amplitude):
+        """
+        Return index of the trial amplitude in the list of amplitudes pass in
+        a parameters to the trial runner. If there is no list of amplitudes 
+        given the returned index will alway be equal to 0. 
+        """
+        if not 'amplitudes' in self.param['trial']:
+            index = 0
+        else:
+            index = self.param['trial']['amplitudes'].index(abs(amplitude))
+        return index
+
+
+    def get_amplitude_marker_voltage(self, amplitude): 
+        """
+        Return the marker voltage for indication of the given amplitude.
+        """
+        amplitude_index = self.get_amplitude_index(amplitude)
+        try:
+            index_to_voltage = self.param['voltage_markers']['amplitude_index_to_volt']
+        except KeyError:
+            marker_voltage = self.param['voltage_marker']['amplitude']
+        else:
+            marker_voltage = np.sign(amplitude)*index_to_voltage(amplitude_index)
+        return marker_voltage
 
 
     def run(self):
@@ -41,9 +73,9 @@ class AmplitudeTrialRunner(TrialRunner):
         self.flybratron_dev.amplitude = 0.0
 
         # Set phidiget voltage to mark the start of the set of experiments.
-        self.mark_quiet_period()
+        self.mark_quiet_period(start_up=True)
         self.mark_start_of_experiment()
-        self.mark_quiet_period()
+        self.mark_quiet_period(start_up=True)
 
         # Repeat set of amplitudes for the requested number of repetitions.
         for repetition_number in range(self.param['trial']['repetitions']):  
@@ -62,7 +94,11 @@ class AmplitudeTrialRunner(TrialRunner):
                 # Loop over amplitude signs (left & right) which are optionally randomized.
                 for sign in left_right_signs:
                     amplitude_w_sign = sign*amplitude
-                    print('rep#: {}, ampitude: {}'.format(repetition_number, amplitude_w_sign))
+                    print('rep#: {}/{}, amplitude: {}'.format(
+                        repetition_number, 
+                        self.param['trial']['repetitions'], 
+                        amplitude_w_sign
+                        ))
                     self.flybratron_dev.amplitude = amplitude_w_sign
                     self.mark_amplitude(amplitude_w_sign)
                     self.flybratron_dev.amplitude = 0.0
@@ -78,14 +114,6 @@ class AmplitudeTrialRunner(TrialRunner):
             self.param['trial']['amplitudes'] = list(self.param['trial']['amplitudes'])
         except TypeError:
             self.param['trial']['amplitudes'] = list([self.param['trial']['amplitudes']])
-
-
-
-
-
-
-
-
 
 
 

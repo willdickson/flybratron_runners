@@ -1,13 +1,14 @@
 from __future__ import print_function
 import time
 import numpy as np
-from trial_runner import TrialRunner
+from flybratron_trial_runner import FlybratronTrialRunner
 
 
-class PhaseTrialRunner(TrialRunner):
+class PhaseTrialRunner(FlybratronTrialRunner):
 
     def __init__(self, param):
         super(PhaseTrialRunner, self).__init__(param)
+
 
     def mark_quiet_period(self):
         """
@@ -27,7 +28,6 @@ class PhaseTrialRunner(TrialRunner):
         self.set_marker_voltage(marker_voltage)
         time.sleep(self.param['trial']['stimulus_on_t'])
 
-
     def run(self):
         """ 
         Run phase analysis. Loop over array/list of phases and present stimulus in
@@ -43,9 +43,12 @@ class PhaseTrialRunner(TrialRunner):
 
         left_right_signs = np.array([1, -1]) # 1 = left,-1 = right
 
+        # Loop over list of phases to test
         for phase in self.param['trial']['phases']:
             self.flybratron_dev.phase = phase
             amplitude = self.param['trial']['amplitude']
+
+            # Present each phase in the left and right directions
             for sign in left_right_signs:
                 amplitude_w_sign = sign*amplitude
                 print('amplitude: {} at phase: {}'.format(amplitude_w_sign, phase))

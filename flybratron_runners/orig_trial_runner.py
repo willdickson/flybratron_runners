@@ -18,7 +18,6 @@ class TrialRunner(object):
 
     PHIDGET_ATTACHMENT_WAIT_MS = 5000
     START_OF_EXPERIMENT_MARKER_T = 0.5 # (sec)
-    STARTUP_QUIET_DURATION = 0.75      # (sec)
 
     def __init__(self, param):
         """
@@ -26,10 +25,12 @@ class TrialRunner(object):
         """
         self.param = param
         self.phidget_aout = None
+        self.flybratron_dev = None
         self.rosbag_partent = None
         self.rosbag_file_name = ''
         self.rosbag_file_path = ''
         self.setup_phidget_aout()
+        self.setup_flybratron()
         self.setup_bagfile_recording()
         self.start_time = time.time()
 
@@ -50,6 +51,19 @@ class TrialRunner(object):
         self.phidget_aout.openWaitForAttachment(self.PHIDGET_ATTACHMENT_WAIT_MS)
         self.phidget_aout.setEnabled(True)
         self.phidget_aout.setVoltage(0.0)
+
+
+    def setup_flybratron(self):
+        """ 
+        Create Flybratron device object and set initial values 
+        """
+        self.flybratron_dev = flybratron.Flybratron(self.param['hardware']['flybratron_port'])
+        self.flybratron_dev.param = {
+            'amplitude': 0.0,
+            'phase': 0.0,
+            'operating_mode': 'sync',
+            'amplitude_mode': 'angvel', 
+        }
 
 
     def setup_bagfile_recording(self):
@@ -108,6 +122,33 @@ class TrialRunner(object):
         self.rosbag_parent.start()
 
 
+    def get_amplitude_index(self, amplitude):
+        """
+        Return index of the trial amplitude in the list of amplitudes pass in
+        a parameters to the trial runner. If there is no list of amplitudes 
+        given the returned index will alway be equal to 0. 
+        """
+        if not 'amplitudes' in self.param['trial']:
+            index = 0
+        else:
+            index = self.param['trial']['amplitudes'].index(abs(amplitude))
+        return index
+
+
+    def get_amplitude_marker_voltage(self, amplitude): 
+        """
+        Return the marker voltage for indication of the given amplitude.
+        """
+        amplitude_index = self.get_amplitude_index(amplitude)
+        try:
+            index_to_voltage = self.param['voltage_markers']['amplitude_index_to_volt']
+        except KeyError:
+            marker_voltage = self.param['voltage_marker']['amplitude']
+        else:
+            marker_voltage = np.sign(amplitude)*index_to_voltage(amplitude_index)
+        return marker_voltage
+
+
     def mark_start_of_experiment(self):
         """ 
         Set analog output of Phidget to voltage indicating the start of experiment  
@@ -116,7 +157,6 @@ class TrialRunner(object):
         self.set_marker_voltage(marker_voltage)
         time.sleep(self.START_OF_EXPERIMENT_MARKER_T)
 
-
     def mark_quiet_period(self):
         """
         Set analog output of Phidget to voltage indicating a quiet period  
@@ -124,6 +164,13 @@ class TrialRunner(object):
         marker_voltage = self.param['voltage_markers']['quiet_period']
         self.set_marker_voltage(marker_voltage)
 
+
+    def mark_amplitude(self, amplitude):
+        """
+        Set analog output of Phidget to voltage indicating a specific trial amplitude 
+        """
+        marker_voltage = self.get_amplitude_marker_voltage(amplitude)
+        self.set_marker_voltage(marker_voltage)
 
     def set_marker_voltage(self, volt):
         """
@@ -161,10 +208,12 @@ class TrialRunner(object):
             print('rogbag file:  {}'.format(self.rosbag_file_path))
 
 
-    def run(self):
-        """
-        Implement this in child class to perform actual trial actions.
-        """
-        print('empty runm method!')
-
-
+# Utility functions
+def index_to_volts(v_step=0.2, v_offset=2.5):
+    """ 
+    Returns a fuction for converting an index to a voltage based on the given
+    step and offset parametes.  
+    f"""
+    def index_to_volts_func(index):
+        return v_step*index + v_offset
+    return index_to_volts_func
