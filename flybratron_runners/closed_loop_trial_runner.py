@@ -46,8 +46,8 @@ class ClosedLoopTrialRunner(FlybratronTrialRunner):
 
         self.flybratron_dev.phase = self.param['trial']['phase']
         self.flybratron_dev.waveform = self.param['trial']['waveform']
-        self.flybratron_dev.gain = self.param['trial']['closed_loop']['gain']
-        self.flybratron_dev.offset = self.param['trial']['closed_loop']['offset']
+        self.flybratron_dev.gain = float(self.param['trial']['closed_loop']['gain'])
+        self.flybratron_dev.offset = float(self.param['trial']['closed_loop']['offset'])
         self.flybratron_dev.amplitude = 0.0
         self.flybratron_dev.operating_mode = 'sync'
 
