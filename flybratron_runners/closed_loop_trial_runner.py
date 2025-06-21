@@ -52,9 +52,9 @@ class ClosedLoopTrialRunner(FlybratronTrialRunner):
         self.flybratron_dev.operating_mode = 'sync'
 
         # Set phidiget voltage to mark the start of the set of experiments.
-        self.mark_quiet_period(self.STARTUP_QUIET_DURATION)
+        self.mark_quiet_period(start_up=True)
         self.mark_start_of_experiment()
-        self.mark_quiet_period(self.STARTUP_QUIET_DURATION)
+        self.mark_quiet_period(start_up=True)
 
         # Repeat set of stimuli for the requested number of repetitions.
         for repetition_number in range(self.param['trial']['repetitions']):  
@@ -83,7 +83,7 @@ class ClosedLoopTrialRunner(FlybratronTrialRunner):
                 # Closed loop (zero amplitude) period
                 self.flybratron_dev.amplitude = 0.0
                 self.flybratron_dev.operating_mode = 'closed_loop'
-                self.mark_quiet_period(stimulus_off_t)
+                self.mark_quiet_period()
 
                 # Open loop stimulus period with some user set amplitude
                 self.flybratron_dev.operating_mode = 'sync'
