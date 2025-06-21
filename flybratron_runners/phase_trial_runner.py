@@ -1,13 +1,14 @@
 from __future__ import print_function
 import time
 import numpy as np
-from trial_runner import TrialRunner
+from flybratron_trial_runner import FlybratronTrialRunner
 
 
-class PhaseTrialRunner(TrialRunner):
+class PhaseTrialRunner(FlybratronTrialRunner):
 
     def __init__(self, param):
         super(PhaseTrialRunner, self).__init__(param)
+
 
     def mark_quiet_period(self):
         """
@@ -26,7 +27,6 @@ class PhaseTrialRunner(TrialRunner):
         marker_voltage = self.param['voltage_markers']['phase_to_volt'](phase)
         self.set_marker_voltage(marker_voltage)
         time.sleep(self.param['trial']['stimulus_on_t'])
-
 
     def run(self):
         """ 

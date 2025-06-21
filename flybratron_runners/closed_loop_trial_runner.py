@@ -2,13 +2,11 @@ from __future__ import print_function
 import copy
 import time
 import random
-from trial_runner import TrialRunner
+from flybratron_trial_runner import FlybratronTrialRunner
 
 
-class ClosedLoopTrialRunner(TrialRunner):
+class ClosedLoopTrialRunner(FlybratronTrialRunner):
 
-
-    STARTUP_QUIET_DURATION = 0.75
 
     def __init__(self, param):
         """
@@ -16,13 +14,17 @@ class ClosedLoopTrialRunner(TrialRunner):
         """
         super(ClosedLoopTrialRunner, self).__init__(param)
 
-    def mark_quiet_period(self, duration):
+
+    def mark_quiet_period(self, start_up=False):
         """
         Set phidget voltage to mark an quiet period and wait for the
         appropriate time period. 
         """
         super(ClosedLoopTrialRunner, self).mark_quiet_period()
-        time.sleep(duration)
+        if start_up:
+            time.sleep(self.STARTUP_QUIET_DURATION)
+        else:
+            time.sleep(self.param['trial']['stimulus_off_t'])
 
 
     def mark_stimulus(self, sign, duration):
@@ -32,6 +34,7 @@ class ClosedLoopTrialRunner(TrialRunner):
         """
         self.set_marker_voltage(sign*self.param['voltage_markers']['stimulus'])
         time.sleep(duration)
+
 
     def run(self):
 
@@ -69,16 +72,17 @@ class ClosedLoopTrialRunner(TrialRunner):
             # Loop over amplitude signs (left & right) which are optionally randomized.
             for sign in left_right_signs:
                 amplitude_w_sign = sign*amplitude
-                print('rep#: {}, ampitude: {}, on_t: {}, off_t: {}'.format(
+                print('rep#: {}/{}, amplitude: {}, on_t: {}, off_t: {}'.format(
                     repetition_number, 
+                    self.param['trial']['repetitions'],
                     amplitude_w_sign, 
                     stimulus_on_t, 
                     stimulus_off_t,
                     ))
 
                 # Closed loop (zero amplitude) period
-                self.flybratron_dev.operating_mode = 'closed_loop'
                 self.flybratron_dev.amplitude = 0.0
+                self.flybratron_dev.operating_mode = 'closed_loop'
                 self.mark_quiet_period(stimulus_off_t)
 
                 # Open loop stimulus period with some user set amplitude

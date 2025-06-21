@@ -1,10 +1,13 @@
-from flybratron_runners import ClosedLoopTrialRunner
+from flybratron_runners import AmplitudeWithPanelsTrialRunner
+from flybratron_runners import index_to_volts
 
 param = {
         'hardware' : {
             'flybratron_port' : '/dev/ttyACM0',
             'phidget_serial'  : 525467,
             'phidget_channel' : 1, 
+            'panels_port'     : '/dev/ttyUSB0', 
+            'panels_baudrate' : 115200,
             },
         'metadata' : {
             'driver'    : 'XHCS',
@@ -18,26 +21,22 @@ param = {
             },
         'trial' :{
             'phase'             : -0.05, 
-            'amplitude'         : 1000,   
+            'amplitudes'        : [200, -200,  200, -200],   
+            'panels_biases'     : [1.0, -1.0, -1.0,  1.0],
+            'panels_pattern_id' : 1, 
             'waveform'          : 'sin2f',
-            'repetitions'       : 10,  
-            'stimulus_on_t'     : 0.125, 
-            'stimulus_off_t'    : 0.750,
-            'closed_loop'       : {
-                'gain'          : -5000,
-                'offset'        : 0, 
-                }, 
-            'randomize'         : {
-                'left_right'    : False,
-                }, 
+            'repetitions'       : 3,  
+            'stimulus_on_t'     : 0.75, 
+            'stimulus_off_t'    : 0.75, 
             },
         'voltage_markers' : {
-            'start_of_experiment' : -8.2, 
-            'quiet_period'        : -9.0, 
-            'stimulus'            : 2.5,  
+            'start_of_experiment'     : -8.2, 
+            'quiet_period'            : -9.0, 
+            'amplitude_index_to_volt' : index_to_volts(v_step=0.2, v_offset=2.5),  
             },
         }
 
-runner = ClosedLoopTrialRunner(param)
+
+runner = AmplitudeWithPanelsTrialRunner(param)
 runner.run()
 runner.clean_up()
